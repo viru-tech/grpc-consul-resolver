@@ -25,5 +25,3 @@ require (
 	golang.org/x/sys v0.13.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 )
-
-replace github.com/simplesurance/grpcconsulresolver => github.com/viru-tech/grpc-consul-resolver v0.0.0-20231020123953-f90b4493b5df
