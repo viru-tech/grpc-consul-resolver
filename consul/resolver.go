@@ -56,11 +56,15 @@ func newConsulResolver(
 	tags []string,
 	healthFilter healthFilter,
 	token string,
+	dc string,
 ) (*consulResolver, error) {
 	cfg := consul.Config{
-		Address:  consulAddr,
-		Scheme:   scheme,
-		Token:    token,
+		Token:   token,
+		Scheme:  scheme,
+		Address: consulAddr,
+
+		Datacenter: dc,
+
 		WaitTime: 10 * time.Minute,
 	}
 
@@ -103,7 +107,7 @@ func (c *consulResolver) query(opts *consul.QueryOptions) ([]resolver.Address, u
 
 	result := make([]resolver.Address, 0, len(entries))
 	for _, e := range entries {
-		// when additionals fields are set in addr, addressesEqual()
+		// when additional fields are set in addr, addressesEqual()
 		// must be updated to honour them
 		addr := e.Service.Address
 		if addr == "" {
@@ -190,7 +194,7 @@ func (c *consulResolver) watcher() {
 
 				// After ReportError() was called, the grpc
 				// loadbalancer will call ResolveNow()
-				// periodically to retry. Therefore we do not
+				// periodically to retry. Therefor we do not
 				// have to retry on our own by e.g.  setting
 				// the timer.
 				c.cc.ReportError(err)
@@ -220,7 +224,7 @@ func (c *consulResolver) watcher() {
 			if addressesEqual(addrs, lastReportedAddrs) {
 				// If the consul server responds with
 				// the same data then in the last
-				// query in less then 50ms, we sleep a
+				// query in less than 50ms, we sleep a
 				// bit to prevent querying in a tight loop
 				// This should only happen if the consul server
 				// is buggy but better be safe. :-)
