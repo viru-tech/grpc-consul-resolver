@@ -23,6 +23,7 @@
 //     resolves to all instances, if none with a passing status is available.
 //     Default: healthy
 //   - token=<string> includes the token in API-Requests to Consul.
+//   - dc=<string> specifies DC for service search.
 //
 // If an OPT is defined multiple times, only the value of the last occurrence
 // is used.
@@ -58,7 +59,7 @@ func NewBuilder() resolver.Builder {
 	return &resolverBuilder{}
 }
 
-func extractOpts(opts url.Values) (scheme string, tags []string, health healthFilter, token string, err error) {
+func extractOpts(opts url.Values) (scheme string, tags []string, health healthFilter, token string, dc string, err error) {
 	for key, values := range opts {
 		if len(values) == 0 {
 			continue
@@ -69,12 +70,12 @@ func extractOpts(opts url.Values) (scheme string, tags []string, health healthFi
 		case "scheme":
 			scheme = strings.ToLower(value)
 			if scheme != "http" && scheme != "https" {
-				return "", nil, healthFilterUndefined, "", fmt.Errorf("unsupported scheme '%s'", value)
+				return "", nil, healthFilterUndefined, "", "", fmt.Errorf("unsupported scheme '%s'", value)
 			}
-
 		case "tags":
 			tags = strings.Split(value, ",")
-
+		case "dc":
+			dc = value
 		case "health":
 			switch strings.ToLower(value) {
 			case "healthy":
@@ -82,48 +83,47 @@ func extractOpts(opts url.Values) (scheme string, tags []string, health healthFi
 			case "fallbacktounhealthy":
 				health = healthFilterFallbackToUnhealthy
 			default:
-				return "", nil, healthFilterUndefined, "", fmt.Errorf("unsupported health parameter value: '%s'", value)
+				return "", nil, healthFilterUndefined, "", "", fmt.Errorf("unsupported health parameter value: '%s'", value)
 			}
 		case "token":
 			token = value
-
 		default:
-			return "", nil, healthFilterUndefined, "", fmt.Errorf("unsupported parameter: '%s'", key)
+			return "", nil, healthFilterUndefined, "", "", fmt.Errorf("unsupported parameter: '%s'", key)
 		}
 	}
 
-	return scheme, tags, health, token, err
+	return scheme, tags, health, token, dc, err
 }
 
-func parseEndpoint(url *url.URL) (serviceName, scheme string, tags []string, health healthFilter, token string, err error) {
+func parseEndpoint(url *url.URL) (serviceName, scheme string, tags []string, health healthFilter, token string, dc string, err error) {
 	const defHealthFilter = healthFilterOnlyHealthy
 
 	// url.Path contains a leading "/", when the URL is in the form
 	// scheme://host/path, remove it
 	serviceName = strings.TrimPrefix(url.Path, "/")
 	if serviceName == "" {
-		return "", "", nil, health, "", errors.New("path is missing in url")
+		return "", "", nil, health, "", "", errors.New("path is missing in url")
 	}
 
-	scheme, tags, health, token, err = extractOpts(url.Query())
+	scheme, tags, health, token, dc, err = extractOpts(url.Query())
 	if err != nil {
-		return "", "", nil, health, "", err
+		return "", "", nil, health, "", "", err
 	}
 
 	if health == healthFilterUndefined {
 		health = defHealthFilter
 	}
 
-	return serviceName, scheme, tags, health, token, nil
+	return serviceName, scheme, tags, health, token, dc, nil
 }
 
 func (*resolverBuilder) Build(target resolver.Target, cc resolver.ClientConn, _ resolver.BuildOptions) (resolver.Resolver, error) {
-	serviceName, scheme, tags, health, token, err := parseEndpoint(&target.URL)
+	serviceName, scheme, tags, health, token, dc, err := parseEndpoint(&target.URL)
 	if err != nil {
 		return nil, err
 	}
 
-	r, err := newConsulResolver(cc, scheme, target.URL.Host, serviceName, tags, health, token)
+	r, err := newConsulResolver(cc, scheme, target.URL.Host, serviceName, tags, health, token, dc)
 	if err != nil {
 		return nil, err
 	}

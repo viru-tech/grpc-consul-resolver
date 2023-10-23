@@ -34,10 +34,11 @@ consul://[<consul-server>]/<serviceName>[?<OPT>[&<OPT>]...]
 
 | OPT        | Format                          | Default                            | Description                                                                                                                                                      |
 |------------|---------------------------------|------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| scheme     | `http\|https`                   | default from [github.com/hashicorp/consul/api](https://pkg.go.dev/github.com/hashicorp/consul/api)   | Establish connection to consul via http or https.                                                                                                                |
+| scheme     | `http|https`                   | default from [github.com/hashicorp/consul/api](https://pkg.go.dev/github.com/hashicorp/consul/api)   | Establish connection to consul via http or https.                                                                                                                |
 | tags       | `<tag>,[,<tag>]...`             |                                                                                                      | Filter service by tags                                                                                                                                           |
-| health     | `healthy\|fallbackToUnhealthy`  | healthy                                                                                              | `healthy` resolves only to services with a passing health status.<br>`fallbackToUnhealthy` resolves to unhealthy ones if none exist with passing healthy status. |
+| health     | `healthy|fallbackToUnhealthy`  | healthy                                                                                              | `healthy` resolves only to services with a passing health status.<br>`fallbackToUnhealthy` resolves to unhealthy ones if none exist with passing healthy status. |
 | token      | `string`                        | default from [github.com/hashicorp/consul/api](https://pkg.go.dev/github.com/hashicorp/consul/api)   | Authenticate Consul API Request with the token.                                                                                                                  |
+| dc | string | empty string | Datacenter for consul client connection |
 
 If a setting is not specified in the URI, including `<consul-server>`, the
 settings defined via the standard
@@ -71,7 +72,7 @@ func main() {
   // "primary" and "eu" are resolved via the consul server "10.10.0.1:1234".
   // If no services with a passing health-checks are available, the connection
   // is established to unhealthy ones.
-  client, _ := grpc.Dial("consul://10.10.0.1:1234/user-service?scheme=https&tags=primary,eu&health=fallbackToUnhealthy")
+  client, _ := grpc.Dial("consul://10.10.0.1:1234/user-service?scheme=https&tags=primary,eu&health=fallbackToUnhealthy&dc=us-east-1")
 
   // Instantiates a GRPC client with a round-robin load-balancer.
   // The addresses of the service "metrics" are resolved via the default
