@@ -1,11 +1,11 @@
 module github.com/simplesurance/grpcconsulresolver
 
+go 1.21
+
 require (
 	github.com/hashicorp/consul/api v1.25.1
 	google.golang.org/grpc v1.59.0
 )
-
-go 1.21
 
 require (
 	github.com/armon/go-metrics v0.4.1 // indirect

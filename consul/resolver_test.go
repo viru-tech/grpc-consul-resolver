@@ -322,7 +322,7 @@ func TestResolveNewAddressOnlyCalledOnChange(t *testing.T) {
 	time.Sleep(time.Second)
 
 	if newAddressCallCnt != cc.UpdateStateCallCnt() {
-		t.Error("cc.NewAddress() was called despite resolved addresses did not change")
+		t.Error("clientConn.NewAddress() was called despite resolved addresses did not change")
 	}
 
 	r.Close()
